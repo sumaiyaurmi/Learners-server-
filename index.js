@@ -28,6 +28,7 @@ async function run() {
     // await client.connect();
 
     const assignmentCollection = client.db("learnersDB").collection("assignments");
+    const submissionsCollection = client.db("learnersDB").collection("submissions");
 
     // assignments apis
     app.get('/assignments', async(req,res)=>{
@@ -66,6 +67,20 @@ async function run() {
       const result = await assignmentCollection.updateOne(query, updateDocs, options);
       res.send(result);
     });
+
+// submissions api
+
+app.get('/submissions', async(req,res)=>{
+  const result=await submissionsCollection.find().toArray()
+  res.send(result)
+})
+
+app.post("/submissions", async (req, res) => {
+  const submissionData = req.body;
+  const result = await submissionsCollection.insertOne(submissionData);
+  res.send(result);
+});
+
     
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
