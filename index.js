@@ -69,7 +69,6 @@ async function run() {
     });
 
 // submissions api
-
 app.get('/submissions', async(req,res)=>{
   const result=await submissionsCollection.find().toArray()
   res.send(result)
@@ -80,6 +79,22 @@ app.post("/submissions", async (req, res) => {
   const result = await submissionsCollection.insertOne(submissionData);
   res.send(result);
 });
+
+// get all submitted assignment by Specefic User
+app.get("/submissions/:email",  async (req, res) => {
+  const email = req.params.email;
+  const query = { email };
+  const result = await submissionsCollection.find(query).toArray();
+  res.send(result);
+});
+
+// get all pending assignment from data
+app.get('/pendings' , async (req,res)=>{
+  const query={status:"pending" }
+  const result=await submissionsCollection.find(query).toArray()
+  res.send(result)
+
+})
 
     
     // Send a ping to confirm a successful connection
