@@ -73,6 +73,12 @@ app.get('/submissions', async(req,res)=>{
   const result=await submissionsCollection.find().toArray()
   res.send(result)
 })
+// app.get("/submissions/:id", async (req, res) => {
+//   const id = req.params.id;
+//   const query = { _id: new ObjectId(id) };
+//   const result = await submissionsCollection.findOne(query);
+//   res.send(result);
+// });
 
 app.post("/submissions", async (req, res) => {
   const submissionData = req.body;
@@ -93,9 +99,28 @@ app.get('/pendings' , async (req,res)=>{
   const query={status:"pending" }
   const result=await submissionsCollection.find(query).toArray()
   res.send(result)
-
 })
+app.get("/submissions/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await submissionsCollection.findOne(query);
+  res.send(result);
+});
 
+
+// updated submitted assignments status
+ app.patch("/submissions/:id", async (req, res) => {
+  const id = req.params.id;
+  const status = req.body;
+  const query = { _id: new ObjectId(id) };
+  const updateDocs = {
+    $set: {
+      ...status,
+    },
+  };
+  const result = await submissionsCollection.updateOne(query, updateDocs);
+  res.send(result);
+});
     
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
