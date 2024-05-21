@@ -1,14 +1,42 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+
+  ],
+  credentials: true,
+  optionSuccessStatus: 200,
+};
 // middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
-// app.use(cookieParser());
+app.use(cookieParser());
+
+// veryfy jwt middleware
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  // console.log('token in the middlware', token)
+  if (!token) return res.status(401).send({ message: "unauthorized access" });
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        console.log(err);
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      // console.log(decoded)
+      req.user = decoded;
+      next();
+    });
+  }
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.aea2zks.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -20,18 +48,39 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+const cookieOption = {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+  secure: process.env.NODE_ENV === "production" ? true : false,
+};
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    const assignmentCollection = client
-      .db("learnersDB")
-      .collection("assignments");
-    const submissionsCollection = client
-      .db("learnersDB")
-      .collection("submissions");
+    const assignmentCollection = client.db("learnersDB").collection("assignments");
+    const submissionsCollection = client.db("learnersDB").collection("submissions");
+
+ // jwt generate
+ app.post("/jwt", async (req, res) => {
+  const user = req.body;
+  console.log(user);
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
+  res.cookie("token", token, cookieOption).send({ success: true });
+});
+
+// clear token
+app.get("/logout", async (req, res) => {
+  const user = req.body;
+  console.log(user);
+  res
+    .clearCookie("token", { ...cookieOption, maxAge: 0 })
+    .send({ success: true });
+});
+
 
     // assignments apis
     app.get("/assignments", async (req, res) => {
